@@ -17,6 +17,7 @@ class DatasetSpec:
     def __str__(self) -> str:
         return (f"DatasetSpec(overlap={self.overlap}, sidelap={self.sidelap}, "f"height={self.height}m, scan_area={self.scan_dimension_x}x{self.scan_dimension_y}m, "f"exposure={self.exposure_time_ms}ms)")
 
+    pass
 
 class Camera:
     """
@@ -27,6 +28,23 @@ class Camera:
     - https://en.wikipedia.org/wiki/Pinhole_camera_model
     """
 
+    def __init__(self, fx: float, fy: float, cx: float, cy: float, sensor_size_x_mm: float, sensor_size_y_mm: float, image_size_x: int, image_size_y: int):
+        self.fx = fx
+        self.fy = fy
+        self.cx = cx
+        self.cy = cy
+        self.sensor_size_x_mm = sensor_size_x_mm
+        self.sensor_size_y_mm = sensor_size_y_mm
+        self.image_size_x = image_size_x
+        self.image_size_y = image_size_y
+        self.pixel_size_x_mm = sensor_size_x_mm / image_size_x
+        self.pixel_size_y_mm = sensor_size_y_mm / image_size_y
+        self.focal_length_x_mm = fx * self.pixel_size_x_mm
+        self.focal_length_y_mm = fy * self.pixel_size_y_mm
+    
+    def __str__(self) -> str:
+        return (f"Camera(fx={self.fx:.2f}, fy={self.fy:.2f}, "f"cx={self.cx:.1f}, cy={self.cy:.1f}, "f"sensor={self.sensor_size_x_mm:.3f}x{self.sensor_size_y_mm:.3f}mm, "f"resolution={self.image_size_x}x{self.image_size_y}px)")
+    
     pass
 
 
