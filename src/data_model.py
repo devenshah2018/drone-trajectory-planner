@@ -6,7 +6,16 @@ class DatasetSpec:
     Data model for specifications of an image dataset.
     """
 
-    pass
+    def __init__(self, overlap: float, sidelap: float, height: float, scan_dimension_x: float, scan_dimension_y: float, exposure_time_ms: float):
+        self.overlap = overlap
+        self.sidelap = sidelap
+        self.height = height
+        self.scan_dimension_x = scan_dimension_x
+        self.scan_dimension_y = scan_dimension_y
+        self.exposure_time_ms = exposure_time_ms
+    
+    def __str__(self) -> str:
+        return (f"DatasetSpec(overlap={self.overlap}, sidelap={self.sidelap}, "f"height={self.height}m, scan_area={self.scan_dimension_x}x{self.scan_dimension_y}m, "f"exposure={self.exposure_time_ms}ms)")
 
 
 class Camera:
