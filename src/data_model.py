@@ -37,10 +37,6 @@ class Camera:
         self.sensor_size_y_mm = sensor_size_y_mm
         self.image_size_x = image_size_x
         self.image_size_y = image_size_y
-        self.pixel_size_x_mm = sensor_size_x_mm / image_size_x
-        self.pixel_size_y_mm = sensor_size_y_mm / image_size_y
-        self.focal_length_x_mm = fx * self.pixel_size_x_mm
-        self.focal_length_y_mm = fy * self.pixel_size_y_mm
     
     def __str__(self) -> str:
         return (f"Camera(fx={self.fx:.2f}, fy={self.fy:.2f}, "f"cx={self.cx:.1f}, cy={self.cy:.1f}, "f"sensor={self.sensor_size_x_mm:.3f}x{self.sensor_size_y_mm:.3f}mm, "f"resolution={self.image_size_x}x{self.image_size_y}px)")
