@@ -45,6 +45,38 @@ def project_world_point_to_image(camera: Camera, world_point: np.ndarray) -> np.
     return np.array([u, v])
 
 
+def reproject_image_point_to_world(
+    camera: Camera, image_point: np.ndarray, distance_from_surface: float
+) -> np.ndarray:
+    """Reproject a 2D image point back to 3D world coordinates at a given depth.
+
+    Args:
+        camera: the camera model
+        image_point: the [u, v] pixel coordinates in the image
+        distance_from_surface: the Z distance from the camera (depth)
+
+    Returns:
+        [X, Y, Z] world coordinates corresponding to the 2D image point.
+        
+    Note:
+        To go from 2D back to 3D, we need additional information - the depth (Z).
+        Without depth, the problem is ambiguous as any point along the ray from 
+        the camera center through the pixel could be the original 3D point.
+    """
+    u, v = image_point
+    
+    # Convert pixel coordinates to normalized image coordinates
+    x = u - camera.cx
+    y = v - camera.cy
+    
+    # Reproject to world coordinates using the pinhole camera model
+    X = x * distance_from_surface / camera.fx
+    Y = y * distance_from_surface / camera.fy
+    Z = distance_from_surface
+    
+    return np.array([X, Y, Z])
+
+
 def compute_image_footprint_on_surface(
     camera: Camera, distance_from_surface: float
 ) -> np.ndarray:
