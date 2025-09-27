@@ -25,8 +25,8 @@ class CameraUnitsTest(unittest.TestCase):
 
         # Case 3: Shift principal point to the bottom left
         camera_ = deepcopy(TEST_CAMERA)
-        camera_.cx = camera_.image_size_x_px // 4
-        camera_.cy = camera_.image_size_y_px * 3 // 4
+        camera_.cx = camera_.image_size_x // 4
+        camera_.cy = camera_.image_size_y * 3 // 4
 
         expected_projection = np.array([390.0, 1030.0])
         computed_projection = camera_utils.project_world_point_to_image(camera_, world_point)
@@ -65,7 +65,7 @@ class CameraUnitsTest(unittest.TestCase):
 
         # Case 4: increase number of pixels (this changes the focal length in mm)
         camera_ = deepcopy(TEST_CAMERA)
-        camera_.image_size_x_px = camera_.image_size_x_px // 2
+        camera_.image_size_x = camera_.image_size_x // 2
         height = 150
         expected_footprint = np.array([107.14, 214.29])
         computed_footprint = camera_utils.compute_image_footprint_on_surface(camera_, height)
