@@ -93,23 +93,13 @@ def compute_image_footprint_on_surface(
     corner1 = np.array([0, 0])  # Top-left
     corner2 = np.array([camera.image_size_x, camera.image_size_y])  # Bottom-right
     
-    # Convert pixel coordinates to normalized image coordinates
-    x1 = (corner1[0] - camera.cx) / camera.fx
-    y1 = (corner1[1] - camera.cy) / camera.fy
-    
-    x2 = (corner2[0] - camera.cx) / camera.fx
-    y2 = (corner2[1] - camera.cy) / camera.fy
-    
-    # Project to world coordinates at given distance
-    X1 = x1 * distance_from_surface
-    Y1 = y1 * distance_from_surface
-    
-    X2 = x2 * distance_from_surface
-    Y2 = y2 * distance_from_surface
+    # Reproject corners to world coordinates using existing function
+    world_point1 = reproject_image_point_to_world(camera, corner1, distance_from_surface)
+    world_point2 = reproject_image_point_to_world(camera, corner2, distance_from_surface)
     
     # Calculate footprint dimensions
-    footprint_x = abs(X2 - X1)
-    footprint_y = abs(Y2 - Y1)
+    footprint_x = abs(world_point2[0] - world_point1[0])
+    footprint_y = abs(world_point2[1] - world_point1[1])
     
     return np.array([footprint_x, footprint_y])
 
