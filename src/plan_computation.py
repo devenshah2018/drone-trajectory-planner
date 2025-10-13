@@ -22,8 +22,41 @@ def compute_distance_between_images(
     Returns:
         The horizontal and vertical distance between images (as a 2-element array).
     """
-    raise NotImplementedError()
+    # Validate overlap and sidelap
+    overlap = float(dataset_spec.overlap)
+    sidelap = float(dataset_spec.sidelap)
 
+    if not (0.0 <= overlap < 1.0):
+        raise ValueError(f"overlap must be in [0, 1), got {overlap}")
+    if not (0.0 <= sidelap < 1.0):
+        raise ValueError(f"sidelap must be in [0, 1), got {sidelap}")
+
+    # Compute the footprint of a single image on the surface at the height
+    footprint = compute_image_footprint_on_surface(camera, dataset_spec.height)
+    footprint_x, footprint_y = float(footprint[0]), float(footprint[1])
+
+    # Distance between image centers
+    distance_x = footprint_x * (1.0 - overlap)
+    distance_y = footprint_y * (1.0 - sidelap)
+
+    return np.array([distance_x, distance_y], dtype=float)
+
+def compute_non_nadir_footprint(camera, height, camera_angle_rad):
+    # Standard nadir footprint
+    footprint = compute_image_footprint_on_surface(camera, height)
+    
+    # Stretch the footprint in the direction of tilt
+    footprint_tilted = footprint.copy()
+
+    # For non-nadir, the footprint on the ground increases by 1/cos(angle) in the direction of tilt
+    footprint_tilted[1] /= np.cos(camera_angle_rad)
+    return footprint_tilted
+
+def compute_distance_between_images_non_nadir(camera, dataset_spec, camera_angle_rad):
+    footprint = compute_non_nadir_footprint(camera, dataset_spec.height, camera_angle_rad)
+    dx = footprint[0] * (1 - dataset_spec.overlap)
+    dy = footprint[1] * (1 - dataset_spec.sidelap)
+    return np.array([dx, dy])
 
 def compute_speed_during_photo_capture(
     camera: Camera, dataset_spec: DatasetSpec, allowed_movement_px: float = 1
