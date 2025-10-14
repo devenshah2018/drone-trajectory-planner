@@ -2,7 +2,6 @@
 """
 
 import numpy as np
-
 from src.data_model import Camera
 
 
@@ -15,6 +14,7 @@ def compute_focal_length_in_mm(camera: Camera) -> np.ndarray:
     Returns:
         [fx, fy] in mm as a 2-element array.
     """
+
     pixel_to_mm_x = camera.sensor_size_x_mm / camera.image_size_x
     pixel_to_mm_y = camera.sensor_size_y_mm / camera.image_size_y
 
@@ -31,6 +31,7 @@ def project_world_point_to_image(camera: Camera, world_point: np.ndarray) -> np.
     Returns:
         [u, v] pixel coordinates corresponding to the 3D world point.
     """
+
     X, Y, Z = world_point
     
     # Project to image coordinates using pinhole camera model
@@ -63,6 +64,7 @@ def reproject_image_point_to_world(
         Without depth, the problem is ambiguous as any point along the ray from 
         the camera center through the pixel could be the original 3D point.
     """
+
     u, v = image_point
     
     # Convert pixel coordinates to normalized image coordinates
@@ -89,6 +91,7 @@ def compute_image_footprint_on_surface(
     Returns:
         [footprint_x, footprint_y] in meters as a 2-element array.
     """
+
     # Get image corner pixel coordinates
     corner1 = np.array([0, 0])  # Top-left
     corner2 = np.array([camera.image_size_x, camera.image_size_y])  # Bottom-right
@@ -116,6 +119,7 @@ def compute_ground_sampling_distance(
     Returns:
         The GSD in meters (smaller among x and y directions). You should return a float and not a numpy data type.
     """
+    
     # Get the image footprint
     footprint = compute_image_footprint_on_surface(camera, distance_from_surface)
     
