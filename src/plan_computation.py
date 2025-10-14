@@ -71,7 +71,19 @@ def compute_speed_during_photo_capture(
     Returns:
         The speed at which the drone should move during photo capture.
     """
-    raise NotImplementedError()
+    # Compute the ground sampling distance (GSD) at the flight height
+    gsd = compute_ground_sampling_distance(camera, dataset_spec.height)
+    
+    # Maximum allowed ground movement during exposure
+    max_ground_movement = allowed_movement_px * gsd
+    
+    # Convert exposure time from milliseconds to seconds
+    exposure_time_s = dataset_spec.exposure_time_ms / 1000.0
+    
+    # Speed = distance / time
+    max_speed = max_ground_movement / exposure_time_s
+    
+    return float(max_speed)
 
 
 def generate_photo_plan_on_grid(
@@ -87,4 +99,59 @@ def generate_photo_plan_on_grid(
         Scan plan as a list of waypoints.
 
     """
-    raise NotImplementedError()
+    # Compute the distance between consecutive images
+    distances = compute_distance_between_images(camera, dataset_spec)
+    dx, dy = distances[0], distances[1]
+    
+    # Compute the maximum speed for blur-free photos
+    max_speed = compute_speed_during_photo_capture(camera, dataset_spec)
+    
+    # Calculate the number of images needed in each direction
+    # We need to ensure complete coverage, so we round up
+    num_images_x = math.ceil(dataset_spec.scan_dimension_x / dx) + 1
+    num_images_y = math.ceil(dataset_spec.scan_dimension_y / dy) + 1
+    
+    # Calculate the actual spacing to center the grid within the scan area
+    # If we need more images than the minimum, spread them evenly
+    if num_images_x > 1:
+        actual_dx = dataset_spec.scan_dimension_x / (num_images_x - 1)
+    else:
+        actual_dx = 0
+        
+    if num_images_y > 1:
+        actual_dy = dataset_spec.scan_dimension_y / (num_images_y - 1)
+    else:
+        actual_dy = 0
+    
+    # Calculate starting positions to center the grid
+    start_x = -dataset_spec.scan_dimension_x / 2
+    start_y = -dataset_spec.scan_dimension_y / 2
+    
+    waypoints = []
+    
+    # Generate waypoints in a lawn-mower pattern
+    for row in range(num_images_y):
+        y = start_y + row * actual_dy
+        
+        # Alternate direction for lawn-mower pattern
+        if row % 2 == 0:
+            # Left to right
+            x_range = range(num_images_x)
+        else:
+            # Right to left
+            x_range = range(num_images_x - 1, -1, -1)
+        
+        for col in x_range:
+            x = start_x + col * actual_dx
+            z = dataset_spec.height
+            
+            # Create waypoint with nadir scanning (looking straight down)
+            waypoint = Waypoint(
+                x=x,
+                y=y, 
+                z=z,
+                speed=max_speed
+            )
+            waypoints.append(waypoint)
+    
+    return waypoints
