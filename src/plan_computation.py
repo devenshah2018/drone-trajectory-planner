@@ -84,7 +84,7 @@ def compute_distance_between_images_non_nadir(camera, dataset_spec, camera_angle
     return np.array([dx, dy])
 
 def compute_speed_during_photo_capture(
-    camera: Camera, dataset_spec: DatasetSpec, allowed_movement_px: float = 1
+    camera: Camera, dataset_spec: DatasetSpec, allowed_movement_px: float = 1, camera_angle_rad: float = 0.0
 ) -> float:
     """Compute the speed of drone during an active photo capture to prevent more than 1px of motion blur.
 
@@ -92,12 +92,14 @@ def compute_speed_during_photo_capture(
         camera: Camera model used for image capture.
         dataset_spec: user specification for the dataset.
         allowed_movement_px: The maximum allowed movement in pixels. Defaults to 1 px.
+        camera_angle_rad: angle of the camera from nadir (in radians). Default is 0 (nadir).
 
     Returns:
         The speed at which the drone should move during photo capture.
     """
     # Compute the ground sampling distance (GSD) at the flight height
-    gsd = compute_ground_sampling_distance(camera, dataset_spec.height)
+    # GSD varies with gimbal angle due to footprint changes
+    gsd = compute_ground_sampling_distance(camera, dataset_spec.height, camera_angle_rad)
     
     # Maximum allowed ground movement during exposure
     max_ground_movement = allowed_movement_px * gsd
