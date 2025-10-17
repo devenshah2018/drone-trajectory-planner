@@ -6,6 +6,8 @@ from src.camera_utils import (
     compute_image_footprint_on_surface,
     compute_ground_sampling_distance,
 )
+from typing import List, Tuple, Dict, Any
+
 
 def compute_distance_between_images(
     camera: Camera, dataset_spec: DatasetSpec
@@ -122,6 +124,7 @@ def generate_photo_plan_on_grid(
         Scan plan as a list of waypoints.
 
     """
+
     # Compute the distance between consecutive images
     distances = compute_distance_between_images(camera, dataset_spec)
     dx, dy = distances[0], distances[1]
@@ -129,13 +132,11 @@ def generate_photo_plan_on_grid(
     # Compute the maximum speed for blur-free photos
     max_speed = compute_speed_during_photo_capture(camera, dataset_spec)
     
-    # Calculate the number of images needed in each direction
-    # We need to ensure complete coverage, so we round up
+    # Calculate the number of images needed in each direction. To ensure complete coverage, round up.
     num_images_x = math.ceil(dataset_spec.scan_dimension_x / dx) + 1
     num_images_y = math.ceil(dataset_spec.scan_dimension_y / dy) + 1
     
-    # Calculate the actual spacing to center the grid within the scan area
-    # If we need more images than the minimum, spread them evenly
+    # Calculate the actual spacing to center the grid within the scan area. If we need more images than minimum, spread them evenly.
     if num_images_x > 1:
         actual_dx = dataset_spec.scan_dimension_x / (num_images_x - 1)
     else:
@@ -178,3 +179,111 @@ def generate_photo_plan_on_grid(
             waypoints.append(waypoint)
     
     return waypoints
+
+def compute_segment_travel_time(
+    distance: float,
+    v_photo: float,
+    v_max: float = 16.0,
+    a_max: float = 3.5,
+) -> Tuple[float, Dict[str, Any]]:
+    """
+    Compute minimum time to travel `distance` starting & ending at v_photo,
+    given max speed v_max and max accel a_max.
+
+    Returns (time_s, profile_dict).
+    profile_dict includes 'type' ('triangular'|'trapezoidal') and relevant params.
+    """
+    if distance <= 0.0:
+        return 0.0, {"type": "degenerate", "distance": distance}
+
+    # candidate peak if no v_max limit (triangular)
+    v_peak = np.sqrt(a_max * distance + v_photo * v_photo)
+
+    if v_peak <= v_max:
+        # triangular profile (no cruise)
+        t_acc = (v_peak - v_photo) / a_max
+        total_time = 2.0 * t_acc
+        return total_time, {"type": "triangular", "v_peak": v_peak, "t_acc": t_acc}
+
+    # trapezoidal: reach v_max, cruise, then decel
+    v_cruise = v_max
+    # distance used accelerating from v_photo to v_cruise and back
+    d_accdec = (v_cruise * v_cruise - v_photo * v_photo) / a_max
+    if d_accdec >= distance:
+        # numerical fallback: compute achievable peak (shouldn't normally happen because v_peak>v_max checked)
+        v_peak = np.sqrt(a_max * distance + v_photo * v_photo)
+        t_acc = (v_peak - v_photo) / a_max
+        total_time = 2.0 * t_acc
+        return total_time, {"type": "triangular_fallback", "v_peak": v_peak, "t_acc": t_acc}
+
+    d_cruise = distance - d_accdec
+    t_acc = (v_cruise - v_photo) / a_max
+    t_cruise = d_cruise / v_cruise
+    total_time = 2.0 * t_acc + t_cruise
+    return total_time, {
+        "type": "trapezoidal",
+        "v_cruise": v_cruise,
+        "t_acc": t_acc,
+        "t_cruise": t_cruise,
+    }
+
+
+def compute_plan_time(
+    positions: List[Any],
+    v_photo: float,
+    exposure_time_s: float = 0.0,
+    v_max: float = 16.0,
+    a_max: float = 3.5,
+) -> Tuple[float, List[Dict[str, Any]]]:
+    """
+    Compute total mission time for a sequence of positions (iterable of 2D/3D numpy-like points).
+    - positions: list of coordinates (np.array, tuple, or Waypoint-like with .position)
+    - v_photo: required speed at photo points (m/s)
+    - exposure_time_s: per-photo dwell time (s) to account for capture
+    Returns (total_time_s, segment_details)
+    """
+    # extract numpy arrays
+    pts = []
+    for p in positions:
+        if hasattr(p, "pos"):
+            pts.append(np.asarray(p.pos))
+        else:
+            pts.append(np.asarray(p))
+
+    total_time = 0.0
+    segments = []
+    n = len(pts)
+    if n <= 1:
+        return total_time, segments
+
+    # include initial photo dwell
+    total_time += exposure_time_s
+    for i in range(n - 1):
+        p0, p1 = pts[i], pts[i + 1]
+        dist = float(np.linalg.norm(p1 - p0))
+        seg_time, profile = compute_segment_travel_time(dist, v_photo, v_max, a_max)
+        dist = float(dist)
+        seg_time = float(seg_time)
+        capture_time = float(exposure_time_s)
+
+        profile_clean = {
+            "type": profile.get("type")
+        }
+        if "v_peak" in profile:
+            profile_clean["v_peak"] = float(profile["v_peak"])
+        if "t_acc" in profile:
+            profile_clean["t_acc"] = float(profile["t_acc"])
+        if "t_cruise" in profile:
+            profile_clean["t_cruise"] = float(profile["t_cruise"])
+
+        seg_info = {
+            "index": int(i),
+            "distance": dist,
+            "travel_time_s": seg_time,
+            "profile": profile_clean,
+            "capture_time_s": capture_time,
+        }
+        total_time += seg_time + exposure_time_s
+        segments.append(seg_info)
+
+    return total_time, segments
