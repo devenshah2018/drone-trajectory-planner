@@ -5,6 +5,7 @@ from src.data_model import Camera, DatasetSpec, Waypoint, SegmentProfileType
 from src.camera_utils import (
     compute_image_footprint_on_surface,
     compute_ground_sampling_distance,
+    compute_non_nadir_footprint
 )
 from typing import List, Tuple, Dict, Any
 
@@ -41,27 +42,6 @@ def compute_distance_between_images(
 
     return np.array([distance_x, distance_y], dtype=float)
 
-def compute_non_nadir_footprint(camera, height, camera_angle_rad) -> np.ndarray:
-    """Compute the footprint of the image captured by the camera at a given distance from the surface for a non-nadir camera angle.
-
-    Args:
-        camera: the camera model.
-        height: distance from the surface (in m).
-        camera_angle_rad: angle of the camera from nadir (in radians).
-
-    Returns:    
-        [footprint_x, footprint_y] in meters as a 2-element array.
-    """
-
-    # Standard nadir footprint
-    footprint = compute_image_footprint_on_surface(camera, height)
-    
-    # Stretch the footprint in the direction of tilt
-    footprint_tilted = footprint.copy()
-
-    # For non-nadir, the footprint on the ground increases by 1/cos(angle) in the direction of tilt
-    footprint_tilted[1] /= np.cos(camera_angle_rad)
-    return footprint_tilted
 
 def compute_distance_between_images_non_nadir(camera, dataset_spec, camera_angle_rad):
     """Compute the distance between images in the horizontal and vertical directions for specified overlap and sidelap for a non-nadir camera angle.
@@ -141,12 +121,22 @@ def generate_photo_plan_on_grid(
     # Calculate starting positions to center the grid
     start_x = -dataset_spec.scan_dimension_x / 2
     start_y = -dataset_spec.scan_dimension_y / 2
+
+    if num_images_x > 1:
+        actual_dx = dataset_spec.scan_dimension_x / (num_images_x - 1)
+    else:
+        actual_dx = start_x
+        
+    if num_images_y > 1:
+        actual_dy = dataset_spec.scan_dimension_y / (num_images_y - 1)
+    else:
+        actual_dy = start_y
     
     waypoints = []
     
     # Generate waypoints in a lawn-mower pattern
     for row in range(num_images_y):
-        y = start_y + row * dy
+        y = start_y + row * actual_dy
         
         # Alternate direction for lawn-mower pattern
         if row % 2 == 0:
@@ -157,7 +147,7 @@ def generate_photo_plan_on_grid(
             x_range = range(num_images_x - 1, -1, -1)
         
         for col in x_range:
-            x = start_x + col * dx
+            x = start_x + col * actual_dx
             z = dataset_spec.height
             
             # Create waypoint with nadir scanning (looking straight down)

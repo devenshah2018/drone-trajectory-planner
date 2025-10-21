@@ -3,7 +3,29 @@
 
 import numpy as np
 from src.data_model import Camera
-from src.plan_computation import compute_non_nadir_footprint
+
+
+def compute_non_nadir_footprint(camera, height, camera_angle_rad) -> np.ndarray:
+    """Compute the footprint of the image captured by the camera at a given distance from the surface for a non-nadir camera angle.
+
+    Args:
+        camera: the camera model.
+        height: distance from the surface (in m).
+        camera_angle_rad: angle of the camera from nadir (in radians).
+
+    Returns:    
+        [footprint_x, footprint_y] in meters as a 2-element array.
+    """
+
+    # Standard nadir footprint
+    footprint = compute_image_footprint_on_surface(camera, height)
+    
+    # Stretch the footprint in the direction of tilt
+    footprint_tilted = footprint.copy()
+
+    # For non-nadir, the footprint on the ground increases by 1/cos(angle) in the direction of tilt
+    footprint_tilted[1] /= np.cos(camera_angle_rad)
+    return footprint_tilted
 
 
 def compute_focal_length_in_mm(camera: Camera) -> np.ndarray:
