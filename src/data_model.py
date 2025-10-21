@@ -1,5 +1,7 @@
 """Data models for the camera and user specification."""
 
+from enum import Enum
+
 
 class DatasetSpec:
     """
@@ -81,3 +83,9 @@ class Waypoint:
     
     def __repr__(self) -> str:
         return self.__str__()
+
+class SegmentProfileType(Enum):
+    TRIANGULAR = "triangular"
+    TRAPEZOIDAL = "trapezoidal"
+    TRIANGULAR_FALLBACK = "triangular_fallback"
+    DEGENERATE = "degenerate"

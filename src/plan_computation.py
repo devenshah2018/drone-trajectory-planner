@@ -1,7 +1,7 @@
 import typing as T
 import math
 import numpy as np
-from src.data_model import Camera, DatasetSpec, Waypoint
+from src.data_model import Camera, DatasetSpec, Waypoint, SegmentProfileType
 from src.camera_utils import (
     compute_image_footprint_on_surface,
     compute_ground_sampling_distance,
@@ -182,10 +182,10 @@ def compute_segment_travel_time(
     given max speed v_max and max accel a_max.
 
     Returns (time_s, profile_dict).
-    profile_dict includes 'type' ('triangular'|'trapezoidal') and relevant params.
+    profile_dict includes 'type' (SegmentProfileType) and relevant params.
     """
     if distance <= 0.0:
-        return 0.0, {"type": "degenerate", "distance": distance}
+        return 0.0, {"type": SegmentProfileType.DEGENERATE, "distance": distance}
 
     # candidate peak if no v_max limit (triangular)
     v_peak = np.sqrt(a_max * distance + v_photo * v_photo)
@@ -194,7 +194,7 @@ def compute_segment_travel_time(
         # triangular profile (no cruise)
         t_acc = (v_peak - v_photo) / a_max
         total_time = 2.0 * t_acc
-        return total_time, {"type": "triangular", "v_peak": v_peak, "t_acc": t_acc}
+        return total_time, {"type": SegmentProfileType.TRIANGULAR, "v_peak": v_peak, "t_acc": t_acc}
 
     # trapezoidal: reach v_max, cruise, then decel
     v_cruise = v_max
@@ -205,14 +205,14 @@ def compute_segment_travel_time(
         v_peak = np.sqrt(a_max * distance + v_photo * v_photo)
         t_acc = (v_peak - v_photo) / a_max
         total_time = 2.0 * t_acc
-        return total_time, {"type": "triangular_fallback", "v_peak": v_peak, "t_acc": t_acc}
+        return total_time, {"type": SegmentProfileType.TRIANGULAR_FALLBACK, "v_peak": v_peak, "t_acc": t_acc}
 
     d_cruise = distance - d_accdec
     t_acc = (v_cruise - v_photo) / a_max
     t_cruise = d_cruise / v_cruise
     total_time = 2.0 * t_acc + t_cruise
     return total_time, {
-        "type": "trapezoidal",
+        "type": SegmentProfileType.TRAPEZOIDAL,
         "v_cruise": v_cruise,
         "t_acc": t_acc,
         "t_cruise": t_cruise,
