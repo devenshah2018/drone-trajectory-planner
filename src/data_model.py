@@ -1,5 +1,7 @@
 """Data models for the camera and user specification."""
 
+from enum import Enum
+
 
 class DatasetSpec:
     """
@@ -61,6 +63,29 @@ class Camera:
 class Waypoint:
     """
     Waypoints are positions where the drone should fly to and capture a photo.
+    
+    Attributes:
+        x (float): X coordinate in meters (eastward direction)
+        y (float): Y coordinate in meters (northward direction)
+        z (float): Z coordinate in meters (altitude above ground)
+        speed (float): Maximum speed at this waypoint in m/s for blur-free photos
     """
 
-    pass
+    def __init__(self, x: float, y: float, z: float, speed: float):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.speed = speed
+    
+    def __str__(self) -> str:
+        return (f"Waypoint(pos=({self.x:.1f}, {self.y:.1f}, {self.z:.1f}), "
+                   f"speed={self.speed:.2f}m/s)")
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+
+class SegmentProfileType(Enum):
+    TRIANGULAR = "triangular"
+    TRAPEZOIDAL = "trapezoidal"
+    TRIANGULAR_FALLBACK = "triangular_fallback"
+    DEGENERATE = "degenerate"

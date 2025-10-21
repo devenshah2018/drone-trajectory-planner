@@ -5,6 +5,29 @@ import numpy as np
 from src.data_model import Camera
 
 
+def compute_non_nadir_footprint(camera, height, camera_angle_rad) -> np.ndarray:
+    """Compute the footprint of the image captured by the camera at a given distance from the surface for a non-nadir camera angle.
+
+    Args:
+        camera: the camera model.
+        height: distance from the surface (in m).
+        camera_angle_rad: angle of the camera from nadir (in radians).
+
+    Returns:    
+        [footprint_x, footprint_y] in meters as a 2-element array.
+    """
+
+    # Standard nadir footprint
+    footprint = compute_image_footprint_on_surface(camera, height)
+    
+    # Stretch the footprint in the direction of tilt
+    footprint_tilted = footprint.copy()
+
+    # For non-nadir, the footprint on the ground increases by 1/cos(angle) in the direction of tilt
+    footprint_tilted[1] /= np.cos(camera_angle_rad)
+    return footprint_tilted
+
+
 def compute_focal_length_in_mm(camera: Camera) -> np.ndarray:
     """Computes the focal length in mm for the given camera
 
@@ -108,24 +131,31 @@ def compute_image_footprint_on_surface(
 
 
 def compute_ground_sampling_distance(
-    camera: Camera, distance_from_surface: float
+    camera: Camera, distance_from_surface: float, camera_angle_rad: float = 0.0
 ) -> float:
     """Compute the ground sampling distance (GSD) at a given distance from the surface.
 
     Args:
         camera: the camera model.
         distance_from_surface: distance from the surface (in m).
+        camera_angle_rad: angle of the camera from nadir (in radians). Default is 0 (nadir).
 
     Returns:
-        The GSD in meters (smaller among x and y directions). You should return a float and not a numpy data type.
+        The GSD in meters. For nadir (0°), returns the smaller GSD (higher resolution).
+        For non-nadir angles, returns the GSD in the direction of tilt (Y direction),
+        as this is the limiting factor for motion blur. You should return a float and not a numpy data type.
     """
     
-    # Get the image footprint
-    footprint = compute_image_footprint_on_surface(camera, distance_from_surface)
+    footprint = compute_non_nadir_footprint(camera, distance_from_surface, camera_angle_rad)
     
     # Calculate GSD in both directions
     gsd_x = footprint[0] / camera.image_size_x
     gsd_y = footprint[1] / camera.image_size_y
     
-    # Return the smaller GSD (higher resolution)
+    # For non-nadir angles, use the GSD in the direction of tilt (Y direction)
+    # because the footprint increases in that direction, making it the limiting factor
+    if camera_angle_rad != 0.0:
+        return float(gsd_y)
+    
+    # For nadir, return the smaller GSD (higher resolution)
     return float(min(gsd_x, gsd_y))
