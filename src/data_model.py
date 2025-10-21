@@ -67,27 +67,16 @@ class Waypoint:
         y (float): Y coordinate in meters (northward direction)
         z (float): Z coordinate in meters (altitude above ground)
         speed (float): Maximum speed at this waypoint in m/s for blur-free photos
-        look_at_x (float, optional): X coordinate of look-at point for non-nadir scans
-        look_at_y (float, optional): Y coordinate of look-at point for non-nadir scans
-        look_at_z (float, optional): Z coordinate of look-at point for non-nadir scans
     """
 
-    def __init__(self, x: float, y: float, z: float, speed: float, 
-                 look_at_x: float = None, look_at_y: float = None, look_at_z: float = None):
+    def __init__(self, x: float, y: float, z: float, speed: float):
         self.x = x
         self.y = y
         self.z = z
         self.speed = speed
-        self.look_at_x = look_at_x
-        self.look_at_y = look_at_y
-        self.look_at_z = look_at_z
     
     def __str__(self) -> str:
-        if self.look_at_x is not None:
-            return (f"Waypoint(pos=({self.x:.1f}, {self.y:.1f}, {self.z:.1f}), "
-                   f"speed={self.speed:.2f}m/s, look_at=({self.look_at_x:.1f}, {self.look_at_y:.1f}, {self.look_at_z:.1f}))")
-        else:
-            return (f"Waypoint(pos=({self.x:.1f}, {self.y:.1f}, {self.z:.1f}), "
+        return (f"Waypoint(pos=({self.x:.1f}, {self.y:.1f}, {self.z:.1f}), "
                    f"speed={self.speed:.2f}m/s)")
     
     def __repr__(self) -> str:
