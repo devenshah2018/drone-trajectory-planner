@@ -138,17 +138,6 @@ def generate_photo_plan_on_grid(
     num_images_x = math.ceil(dataset_spec.scan_dimension_x / dx) + 1
     num_images_y = math.ceil(dataset_spec.scan_dimension_y / dy) + 1
     
-    # Calculate the actual spacing to center the grid within the scan area. If we need more images than minimum, spread them evenly.
-    if num_images_x > 1:
-        actual_dx = dataset_spec.scan_dimension_x / (num_images_x - 1)
-    else:
-        actual_dx = 0
-        
-    if num_images_y > 1:
-        actual_dy = dataset_spec.scan_dimension_y / (num_images_y - 1)
-    else:
-        actual_dy = 0
-    
     # Calculate starting positions to center the grid
     start_x = -dataset_spec.scan_dimension_x / 2
     start_y = -dataset_spec.scan_dimension_y / 2
@@ -157,7 +146,7 @@ def generate_photo_plan_on_grid(
     
     # Generate waypoints in a lawn-mower pattern
     for row in range(num_images_y):
-        y = start_y + row * actual_dy
+        y = start_y + row * dy
         
         # Alternate direction for lawn-mower pattern
         if row % 2 == 0:
@@ -168,7 +157,7 @@ def generate_photo_plan_on_grid(
             x_range = range(num_images_x - 1, -1, -1)
         
         for col in x_range:
-            x = start_x + col * actual_dx
+            x = start_x + col * dx
             z = dataset_spec.height
             
             # Create waypoint with nadir scanning (looking straight down)
