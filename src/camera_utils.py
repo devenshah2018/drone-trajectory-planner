@@ -3,6 +3,7 @@
 
 import numpy as np
 from src.data_model import Camera
+from src.plan_computation import compute_non_nadir_footprint
 
 
 def compute_focal_length_in_mm(camera: Camera) -> np.ndarray:
@@ -123,13 +124,7 @@ def compute_ground_sampling_distance(
         as this is the limiting factor for motion blur. You should return a float and not a numpy data type.
     """
     
-    # Get the image footprint (accounting for camera angle if non-zero)
-    if camera_angle_rad == 0.0:
-        footprint = compute_image_footprint_on_surface(camera, distance_from_surface)
-    else:
-        # Import here to avoid circular dependency
-        from src.plan_computation import compute_non_nadir_footprint
-        footprint = compute_non_nadir_footprint(camera, distance_from_surface, camera_angle_rad)
+    footprint = compute_non_nadir_footprint(camera, distance_from_surface, camera_angle_rad)
     
     # Calculate GSD in both directions
     gsd_x = footprint[0] / camera.image_size_x
