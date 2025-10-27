@@ -14,51 +14,11 @@ This project implements a complete drone trajectory planning system that:
 - Supports both nadir and non-nadir scanning capabilities
 
 ## Features
-
-### Core Functionality
 - **Camera Modeling**: Complete pinhole camera model with projection and reprojection
 - **Flight Plan Generation**: Automated waypoint generation with lawn-mower patterns
 - **Image Spacing**: Precise calculation of image distances for specified overlap/sidelap
 - **Speed Optimization**: Motion blur prevention through speed computation
 - **Time Optimization**: Optimal flight time calculation with acceleration constraints
-
-### Advanced Features
-- **Non-Nadir Scanning**: Support for tilted camera angles with footprint adjustments
-- **Ground Sampling Distance (GSD)**: Accurate GSD computation for image quality assessment
-- **Mission Time Calculation**: Total flight duration with realistic acceleration profiles
-- **Parameter Analysis**: Tools for analyzing how camera/flight parameters affect performance
-
-## Technical Implementation
-
-### Data Models
-- **Camera**: Pinhole camera model with intrinsic parameters and sensor specifications
-- **DatasetSpec**: Flight mission specifications including overlap, height, and scan area
-- **Waypoint**: Individual flight positions with coordinates, speed, and optional look-at points
-
-### Key Algorithms
-- **Trapezoidal Speed Profiles**: Optimal acceleration/deceleration between waypoints
-- **Motion Blur Prevention**: Speed limits based on exposure time and ground sampling distance
-- **Coverage Optimization**: Efficient area coverage with minimal flight time
-
-## Project Structure
-
-```
-├── src/
-│   ├── data_model.py          # Data models for camera, dataset, and waypoints
-│   ├── camera_utils.py        # Camera projection and GSD calculations
-│   ├── plan_computation.py    # Flight planning and time optimization
-│   └── visualization.py       # Flight plan visualization tools
-├── main.ipynb                 # Interactive demonstration notebook
-└── README.md                  # This file
-```
-
-## Results & Analysis
-
-The system provides detailed analysis including:
-- **Flight Pattern Visualization**: 2D/3D plots of waypoint paths
-- **Speed Analysis**: Impact of camera parameters on maximum speeds
-- **Time Optimization**: Comparison with constant-speed approaches
-- **Coverage Verification**: Ensures complete area coverage with specified overlap
 
 ## Documentation
 
